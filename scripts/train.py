@@ -19,7 +19,7 @@ logging.getLogger().setLevel(logging.INFO)
 DATA_PATH = os.path.realpath("data")
 TRAIN_PATH = os.path.join(DATA_PATH, "train.csv")
 MODEL_PATH = os.path.realpath("model")
-XGB_MODEL_PATH = os.path.join(MODEL_PATH, "xgb_model.pkl")
+XGB_MODEL_PATH = os.path.join(MODEL_PATH, "xgb_model")
 RESET_MODEL = True
 EVAL_RATIO = 0.05
 

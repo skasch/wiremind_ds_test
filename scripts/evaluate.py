@@ -21,7 +21,7 @@ logging.getLogger().setLevel(logging.INFO)
 DATA_PATH = os.path.realpath("data")
 MODEL_PATH = os.path.realpath("model")
 TEST_PATH = os.path.join(DATA_PATH, "test.csv")
-XGB_MODEL_PATH = os.path.join(MODEL_PATH, "xgb_model.pkl")
+XGB_MODEL_PATH = os.path.join(MODEL_PATH, "xgb_model")
 
 test_df = pd.read_csv(TEST_PATH)
 processed_test_df = wm.features.process_df(test_df)
@@ -45,5 +45,5 @@ for trip_id, trip_df in test_df.groupby("trip_id"):
     ].shape[0]
     print(
         f"The expected demand for trip {trip_id} on day {day} with price {price} is "
-        f"{expected_demand}. The actual demand was {actual_demand}."
+        f"{expected_demand:.2f}. The actual demand was {actual_demand}."
     )
