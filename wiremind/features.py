@@ -446,6 +446,23 @@ def describe_demand(
     ).assign(demand=price_demands)
 
 
+def get_trip_info(trip_df: pd.DataFrame) -> pd.Series:
+    """
+    Extract the information describing a given trip.
+
+    Args:
+        trip_df: The dataframe containing the data for a given trip.
+
+    Returns:
+        A Series containing data describing that trip.
+    """
+    min_price = trip_df.price.min()
+    max_price = trip_df.price.max()
+    return (
+        trip_df[INFO_COLUMNS].assign(min_price=min_price, max_price=max_price).iloc[0]
+    )
+
+
 DEFAULT_N_PRICES = 20
 
 
@@ -469,7 +486,7 @@ def process_trip_at_day(
         by ``describe_previous_demand``.
     """
     trip_df = trip_df.sort_values("price")
-    trip_info = trip_df[INFO_COLUMNS].iloc[0]
+    trip_info = get_trip_info(trip_df)
     previous_df = trip_df.loc[lambda df: df.sale_day < day]
     previous_total_demand = previous_df.shape[0]
     previous_prices = previous_df.price.tolist()
@@ -498,9 +515,9 @@ def process_trip(
     rows = []
     previous_total_demand = 0
     previous_prices: t.List[float] = []
-    min_price = trip_df.price.min()
-    max_price = trip_df.price.max()
-    trip_info = trip_df[INFO_COLUMNS].iloc[0]
+    trip_info = get_trip_info(trip_df)
+    min_price = trip_info.min_price
+    max_price = trip_info.max_price
     for day, day_trip_df in trip_df.sort_values("price").groupby("sale_day"):
         prices = generate_prices(min_price, max_price, n_prices)
         day_prices = day_trip_df.price.tolist()

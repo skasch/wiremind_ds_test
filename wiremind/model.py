@@ -130,4 +130,5 @@ class DemandModel:
                 "Please set `trip_df` by calling `set_trip_data` before calling this "
                 "method."
             )
-        return self.predict(features.process_trip_at_day(self.trip_df, day, [price]))[0]
+        pred = self.predict(features.process_trip_at_day(self.trip_df, day, [price]))[0]
+        return max(0, pred)

@@ -44,6 +44,6 @@ for trip_id, trip_df in test_df.groupby("trip_id"):
         lambda df: (df.sale_day == day) & (df.price >= price)
     ].shape[0]
     print(
-        f"The expected demand for trip {trip_id} on day {day} with price {price} is "
-        f"{expected_demand:.2f}. The actual demand was {actual_demand}."
+        f"The expected demand for trip {trip_id} on day {day:>5} with price {price:>6} "
+        f"is {expected_demand:>6.2f}. The actual demand was {actual_demand}."
     )
