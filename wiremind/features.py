@@ -224,12 +224,19 @@ def train_test_split(
     )
 
 
+def split_X_y(df: pd.DataFrame) -> t.Tuple[pd.DataFrame, pd.Series]:
+    X_cols = [c for c in df.columns if c != "demand"]
+    return df[X_cols], df.demand
+
+
 PriceGenerator = t.Callable[[float, float, int], t.List[float]]
 
 
 def generate_prices(min_price: float, max_price: float, n_prices: int) -> t.List[float]:
     delta = (max_price - min_price) * 1.01  # Gives 1% chance to be above max price
-    return list(sorted(min_price + delta * random.random() for _ in range(n_prices)))
+    return sorted(
+        round(min_price + delta * random.random(), 2) for _ in range(n_prices)
+    )
 
 
 def compute_demands(
@@ -266,6 +273,38 @@ def merge_sorted(arr1: t.List[float], arr2: t.List[float]) -> t.List[float]:
     return ans
 
 
+def describe_previous_demand(
+    previous_total_demand: int,
+    previous_prices: t.List[float],
+    day: int,
+    prices: t.List[float],
+) -> pd.DataFrame:
+    """
+    Describe the demand on a given day for a trip given a list of prices.
+
+    Args:
+        day_prices: The prices at which the tickets were sold on a given day.
+        previous_total_demand: The total number of tickets sold up to the day before.
+        previous_prices: The list of all prices for tickets sold up to the day before.
+        day: The day considered, relative to the departure day.
+        prices: The list of prices to compute demand for.
+
+    Returns:
+        A dataframe containing, for each price in ``prices``, the corresponding demand
+        on that day, as well as the corresponding demand on all prior days, the total
+        demand on all prior days, and the day number itself.
+    """
+    previous_price_demands = compute_demands(previous_prices, prices)
+    return pd.DataFrame(
+        dict(
+            day=day,
+            price=prices,
+            previous_total_demand=previous_total_demand,
+            previous_price_demand=previous_price_demands,
+        )
+    )
+
+
 def describe_demand(
     day_prices: t.List[float],
     previous_total_demand: int,
@@ -288,20 +327,27 @@ def describe_demand(
         on that day, as well as the corresponding demand on all prior days, the total
         demand on all prior days, and the day number itself.
     """
-    previous_price_demands = compute_demands(previous_prices, prices)
     price_demands = compute_demands(day_prices, prices)
-    return pd.DataFrame(
-        dict(
-            day=day,
-            price=prices,
-            previous_total_demand=previous_total_demand,
-            previous_price_demand=previous_price_demands,
-            demand=price_demands,
-        )
-    )
+    return describe_previous_demand(
+        previous_total_demand, previous_prices, day, prices
+    ).assign(demand=price_demands)
 
 
 DEFAULT_N_PRICES = 20
+
+
+def process_trip_at_day(
+    trip_df: pd.DataFrame, day: int, prices: t.List[float]
+) -> pd.DataFrame:
+    trip_df = trip_df.sort_values("price")
+    info_columns = HOUR_COLUMNS + DAY_OF_WEEK_COLUMNS + PERIOD_COLUMNS
+    trip_info = trip_df[info_columns].iloc[0]
+    previous_df = trip_df.loc[lambda df: df.sale_day < day]
+    previous_total_demand = previous_df.shape[0]
+    previous_prices = previous_df.price.tolist()
+    return describe_previous_demand(
+        previous_total_demand, previous_prices, day, prices
+    ).assign(**trip_info)
 
 
 @perf.timer

@@ -1,0 +1,6 @@
+model/
+env/
+data/
+assignment/
+.mypy_cache/
+.pytest_cache/
